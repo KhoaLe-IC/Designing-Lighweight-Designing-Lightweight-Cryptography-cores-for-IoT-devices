@@ -1,4 +1,4 @@
-# Lộ trình Học tập và Triển khai: Thiết kế lõi mã hóa Chacha20 (Dành cho Sinh viên Năm 2)
+# Lộ trình Học tập và Triển khai: Thiết kế lõi mã hóa Chacha20
 
 Tài liệu này cung cấp các kiến thức nền tảng, tài liệu tham khảo và kế hoạch chi tiết để một sinh viên năm 2 ngành Kỹ thuật Máy tính/Điện tử có thể tự thiết kế thành công một lõi IP (Intellectual Property) mật mã hạng nhẹ.
 
