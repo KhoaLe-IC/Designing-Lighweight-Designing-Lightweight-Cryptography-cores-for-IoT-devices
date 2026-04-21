@@ -1,67 +1,78 @@
-module Chacha_algo(clk, start, key, bc, nonce, plaintext, ciphertext, finish);
-    input clk, start;
-    input [255:0] key;
-    input [31:0] bc;
-    input [95:0] nonce;
-    input [511:0] plaintext;
-    output [511:0] ciphertext;
-    output finish;
+module Chacha_algo(
+    input clk, start,
+    input [255:0] key,
+    input [31:0] bc,
+    input [95:0] nonce,
+    input [511:0] plaintext,
+    output [511:0] ciphertext,
+    output finish
+);
 
-    reg [3:0] state = 4'd0;
-    reg [3:0] loop = 4'd0;
+    // FSM States: 0(Idle), 1(Init Matrix), 2-9(Quarter Rounds), 10(Done)
+    reg [3:0] fsm_state = 4'd0;
+    reg [3:0] round_cnt = 4'd0;
 
     wire [511:0] keystream;
-    wire [3:0] p0, p1, p2, p3;
-    wire done;
+    wire [3:0] idx_a, idx_b, idx_c, idx_d;
+    wire qr_done;
 
-    BlockFunction datapath_inst (
+    BlockFunction BK (
+        .clk(clk),
         .key(key), .nonce(nonce), .bc(bc),
-        .outp(keystream),
-        .state(state),
-        .finish(done), 
-        .p0(p0), .p1(p1), .p2(p2), .p3(p3),
-        .clk(clk)
+        .fsm_state(fsm_state),
+        .idx_a(idx_a), .idx_b(idx_b), .idx_c(idx_c), .idx_d(idx_d),
+        .keystream(keystream),
+        .qr_done(qr_done)
     );
 
     always @(posedge clk) begin
-        if (state == 4'd0 && start) begin
-            state <= 4'd1;
-            loop <= 4'd0;
+        // STATE 0: Đứng chờ input đã sẵn sàng và đợi lệnh start
+        if (fsm_state == 4'd0) begin
+            if (start) begin
+                fsm_state <= 4'd1;  // Chuyển sang nạp ma trận
+                round_cnt <= 4'd0;
+            end
         end
-        else if (state >= 4'd1 && state <= 4'd8) begin
-            if (done) begin 
-                if (state == 4'd8) begin 
-                    if (loop == 4'd9) begin
-                        state <= 4'd9;
+        // STATE 1: Quá trình nạp dữ liệu vào ma trận diễn ra ở đây
+        else if (fsm_state == 4'd1) begin
+            fsm_state <= 4'd2;      // Nạp xong, sang Quarter Round đầu tiên
+        end
+        // STATE 2 -> 9: Thực thi 8 Quarter Rounds (4 cột, 4 chéo)
+        else if (fsm_state >= 4'd2 && fsm_state <= 4'd9) begin
+            if (qr_done) begin 
+                if (fsm_state == 4'd9) begin 
+                    if (round_cnt == 4'd9) begin
+                        fsm_state <= 4'd10; // Đã xong đủ 10 vòng Double Round
                     end else begin
-                        loop <= loop + 1;
-                        state <= 4'd1;
+                        round_cnt <= round_cnt + 1'b1;
+                        fsm_state <= 4'd2;  // Quay lại cột đầu tiên của vòng mới
                     end
                 end else begin
-                    state <= state + 1;
+                    fsm_state <= fsm_state + 1'b1;
                 end
             end
         end
-        else if (state == 4'd9) begin
-            if(!start) begin
-                state <= 4'd0;
-             end
+        // STATE 10: Xong, xuất tín hiệu finish và đợi reset
+        else if (fsm_state == 4'd10) begin
+            if (!start) begin
+                fsm_state <= 4'd0;
+            end
         end
     end
 
-    
-    assign finish = (state == 4'd9);
+    assign finish = (fsm_state == 4'd10);
     assign ciphertext = keystream ^ plaintext;
 
+    // Bộ giải mã địa chỉ ma trận (Căn chỉnh lại index do dời state)
+    wire [1:0] qr_idx;
+    wire is_diag;
     
-    wire [1:0] ptr;
-    wire diag;
-    assign ptr = (state == 4'd0 || state > 4'd8) ? 2'd0 : (state - 4'd1);
-    assign diag = (state >= 4'd5);
+    assign qr_idx = (fsm_state >= 4'd2 && fsm_state <= 4'd9) ? (fsm_state - 4'd2) : 2'd0;
+    assign is_diag = (fsm_state >= 4'd6);
 
-    assign p0 = {2'b00, ptr};
-    assign p1 = {2'b01, ptr + {1'b0, diag}};
-    assign p2 = {2'b10, ptr + {diag, 1'b0}};
-    assign p3 = {2'b11, ptr + ((diag) ? 2'd3 : 2'd0)};
+    assign idx_a = {2'b00, qr_idx};
+    assign idx_b = {2'b01, qr_idx + {1'b0, is_diag}};
+    assign idx_c = {2'b10, qr_idx + {is_diag, 1'b0}};
+    assign idx_d = {2'b11, qr_idx + ((is_diag) ? 2'd3 : 2'd0)};
 
 endmodule
