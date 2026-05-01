@@ -82,9 +82,9 @@ module BlockFunction(
     // Nếu là bước 2 hoặc 4, ALU sẽ tính toán cho cập (c, b) thay vì (a, d)
     wire is_cb_step = (step_cnt == 4'd2 || step_cnt == 4'd4);
 
-    assign alu_in_a = (is_cb_step ? abcd_vars[2]) : abcd_vars[0];
-    assign alu_in_b = (is_cb_step ? abcd_vars[3]) : abcd_vars[1];
-    assign alu_in_d = (is_cb_step ? abcd_vars[1]) : abcd_vars[3];
+    assign alu_in_a = (is_cb_step) ? abcd_vars[2] : abcd_vars[0];
+    assign alu_in_b = (is_cb_step) ? abcd_vars[3] : abcd_vars[1];
+    assign alu_in_d = (is_cb_step) ? abcd_vars[1] : abcd_vars[3];
     
     assign adder_out = alu_in_a + alu_in_b;
     assign xor_out   = alu_in_d ^ adder_out;
