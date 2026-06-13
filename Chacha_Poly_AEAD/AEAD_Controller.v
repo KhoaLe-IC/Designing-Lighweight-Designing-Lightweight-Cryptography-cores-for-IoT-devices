@@ -68,10 +68,8 @@ module AEAD_controller(
     // - Khi Top module bơm AAD (2) hoặc CTX (3) hợp lệ.
     // - Khi FSM tự động sinh các Word đệm 0 (state 1, 3).
     // - Khi FSM gửi block chiều dài (state 4).
-    assign mac_data_in = !mac_busy && (
-                         (valid && (type_in == 3'd2 || type_in == 3'd3) && (state == 3'd0 || state == 3'd2)) ||
-                         (state == 3'd1) || (state == 3'd3) || (state == 3'd4)
-                         );
+    assign mac_data_in = (!mac_busy && ((valid && (type_in == 3'd2 || type_in == 3'd3) && (state == 3'd0 || state == 3'd2)) ||
+                         (state == 3'd1) || (state == 3'd3) || (state == 3'd4))) ? 1'b1 : 1'b0;
 
     // Báo cho PolyMAC biết mỗi block bơm xuống luôn luôn đủ 16 bytes (128-bit)
     assign mac_msg_bytes = 5'd16; 
@@ -162,12 +160,7 @@ module AEAD_controller(
                     if (!mac_busy && word_cnt == 2'd3) state <= 3'd5;
                 end
                 
-                // -------------------------------------------------------------
-                // STATE 5: CHỜ POLYMAC XUẤT MAC TAG
-                // -------------------------------------------------------------
-                3'd5: begin 
-                    // Mạch đứng im ở đây chờ tín hiệu mac_finish để chốt cờ finish toàn cục
-                end
+                default: ;
             endcase
         end
     end

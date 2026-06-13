@@ -85,7 +85,7 @@ module PolyMAC(
 
     // Khối MUX quyết định đưa tín hiệu nào vào bộ cộng dựa trên State hiện tại
     always @(*) begin
-        alu_A = 138'd0; alu_B = 138'd0; // Khởi tạo mặc định để chống nhiễu Latch
+        
         case (state)
             4'd1: begin // State 1: Cộng dồn h + Message + Padding bit
                 alu_A = {6'd0, h};
@@ -120,6 +120,10 @@ module PolyMAC(
                 alu_A = {8'd0, (Acc[130] ? Acc[129:0] : h[129:0])};
                 alu_B = {10'd0, s_reg}; // Cộng với khóa s
             end
+			default: begin
+				alu_A = 138'd0;
+				alu_B = 138'd0;
+			end
         endcase
     end
 
@@ -147,24 +151,32 @@ module PolyMAC(
                             2'd1: r_reg[63:32]  <= I & 32'h0ffffffc; // Xóa 4 bit cao nhất và 2 bit thấp nhất
                             2'd2: r_reg[95:64]  <= I & 32'h0ffffffc;
                             2'd3: r_reg[127:96] <= I & 32'h0ffffffc;
+							default: ;
                         endcase
                         in_cnt <= in_cnt + 1'b1;
-                    end else if (in_s) begin
+                    end 
+					else if (in_s) begin
                         // Nạp Khóa s: Nạp thô, không cần Clamp
                         case (in_cnt)
                             2'd0: s_reg[31:0]   <= I;
                             2'd1: s_reg[63:32]  <= I;
                             2'd2: s_reg[95:64]  <= I;
                             2'd3: s_reg[127:96] <= I;
+							default: ;
                         endcase
                         in_cnt <= in_cnt + 1'b1;
-                    end else if (data_in) begin
+                    end 
+					else if (data_in) begin
                         // Nạp Thông điệp: Nạp vào thanh ghi đa nhiệm Acc
                         case (in_cnt) 
                             2'd0: Acc <= {106'd0, I}; // Ép các bit thừa (từ 32 đến 137) về 0 để dọn rác
                             2'd1: Acc[63:32]  <= I;
                             2'd2: Acc[95:64]  <= I;
-                            2'd3: begin Acc[127:96] <= I; state <= 4'd1; end // Đủ 4 nhịp -> Kích hoạt FSM chạy
+                            2'd3: begin 
+								Acc[127:96] <= I; 
+								state <= 4'd1; // Đủ 4 nhịp -> Kích hoạt FSM chạy
+							end 
+							default: ;
                         endcase
                         in_cnt <= in_cnt + 1'b1;
                     end
@@ -186,7 +198,8 @@ module PolyMAC(
                 4'd3: begin // VÒNG LẶP NHÂN BIT-SERIAL (256 chu kỳ)
                     if (!mul_cnt[0]) begin // Pha Chẵn
                         Acc <= alu_sum; // Cộng tích lũy vào Acc
-                    end else begin         // Pha Lẻ
+                    end 
+					else begin         // Pha Lẻ
                         h <= alu_sum[131:0]; // Cập nhật h thành giá trị đã dịch và rút gọn
                     end
                     
@@ -222,6 +235,7 @@ module PolyMAC(
                         2'd1: O <= Acc[63:32];  // Nhịp 2: Đẩy 32 bit tiếp theo
                         2'd2: O <= Acc[95:64];  // Nhịp 3
                         2'd3: O <= Acc[127:96]; // Nhịp 4: Đẩy 32 bit cao nhất
+						default: ;
                     endcase
                     if (out_cnt == 2'd3) begin
                         state <= 4'd0; // Đẩy xong 4 Words, quay về trạng thái ngủ chờ gói tin mới
