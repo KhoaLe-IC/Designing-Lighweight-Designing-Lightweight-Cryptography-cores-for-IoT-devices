@@ -1,10 +1,10 @@
 module Chacha_algo(
-    input clk, start;          // Xung nhịp và tín hiệu khởi động (Active-High)
-    input [31:0] I;            // Luồng dữ liệu vào (Khóa, Nonce, Dữ liệu bản rõ)
-    input ready_in;            // Cờ cho biết thiết bị nhận dữ liệu đã sẵn sàng
+    input clk, start,          // Xung nhịp và tín hiệu khởi động (Active-High)
+    input [31:0] I,            // Luồng dữ liệu vào (Khóa, Nonce, Dữ liệu bản rõ)
+    input ready_in,            // Cờ cho biết thiết bị nhận dữ liệu đã sẵn sàng
 
-    output reg [31:0] O;       // Luồng dữ liệu ra (Bản mã - Ciphertext)
-    output reg valid_out;      // Cờ báo hiệu dữ liệu ngõ ra hợp lệ
+    output reg [31:0] O,       // Luồng dữ liệu ra (Bản mã - Ciphertext)
+    output reg valid_out,      // Cờ báo hiệu dữ liệu ngõ ra hợp lệ
 );
     
     wire finish;               // Cờ từ BlockFunction báo đã cộng xong ma trận gốc
