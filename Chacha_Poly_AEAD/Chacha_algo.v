@@ -6,7 +6,7 @@ module Chacha_algo(clk, start, I, ready_in, O, valid_out);
     output reg [31:0] O;       // Luồng dữ liệu ra (Bản mã - Ciphertext)
     output reg valid_out;      // Cờ báo hiệu dữ liệu ngõ ra hợp lệ
 
-    wire done;                 // Cờ từ BlockFunction báo đã xoay xong 20 vòng
+    
     wire finish;               // Cờ từ BlockFunction báo đã cộng xong ma trận gốc
     wire [31:0] block_O;       // 1 Word (32-bit) xuất ra từ ma trận trạng thái
     reg [3:0] read_addr;       // Con trỏ địa chỉ để đọc lần lượt 16 Word từ ma trận
@@ -37,7 +37,6 @@ module Chacha_algo(clk, start, I, ready_in, O, valid_out);
         .read_addr(read_addr),
         .ready(ready),
         .O(block_O),
-        .done(done),
         .finish(finish)
     );
 
