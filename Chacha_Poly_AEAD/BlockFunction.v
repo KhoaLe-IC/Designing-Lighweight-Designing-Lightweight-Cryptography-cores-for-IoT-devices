@@ -1,11 +1,11 @@
-module BlockFunction(clk, I, load_en, read_addr, ready, O, done, finish);
-    input clk, load_en, ready;
-    input [31:0] I;
-    input [3:0] read_addr;     // Địa chỉ word cần đọc xuất ra ngoài
-    output [31:0] O;           // Dữ liệu word ngõ ra
-    output done;               // Cờ báo xoay xong 20 vòng
-    output reg finish;         // Cờ báo cộng xong ma trận gốc (Hoàn thành)
-
+module BlockFunction(
+    input clk, load_en, ready,
+	input [31:0] I,
+	input [3:0] read_addr,     // Địa chỉ word cần đọc xuất ra ngoài
+	output [31:0] O,           // Dữ liệu word ngõ ra
+    output reg finish         // Cờ báo cộng xong ma trận gốc (Hoàn thành)
+);
+	
     reg [2:0] state;           // 8 nhịp (Steps) cho mỗi cụm QuarterRound
     reg [1:0] qr_id;           // ID của hàm QuarterRound (0 đến 3)
     reg [4:0] round_cnt;       // Đếm số vòng (0 đến 19, tổng cộng 20 vòng)
@@ -30,7 +30,7 @@ module BlockFunction(clk, I, load_en, read_addr, ready, O, done, finish);
         end
     endfunction
 
-    assign done = (round_cnt == 5'd20); // Dừng sau 20 vòng
+    wire done = (round_cnt == 5'd20); // Dừng sau 20 vòng
 
     // -------------------------------------------------------------------------
     // LOGIC ĐỊNH TUYẾN CHỈ SỐ (Index Routing cho Ma trận)
