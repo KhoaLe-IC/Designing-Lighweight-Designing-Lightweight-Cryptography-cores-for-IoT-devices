@@ -10,7 +10,7 @@ module AEAD_controller(
     // =========================================================================
     // 2. CỔNG GIAO TIẾP VỚI LÕI POLYMAC BÊN DƯỚI
     // =========================================================================
-    output [31:0] mac_I,     // Dữ liệu đã được tiền xử lý (mask rác, độn 0) bơm vào PolyMAC
+    output reg [31:0] mac_I,     // Dữ liệu đã được tiền xử lý (mask rác, độn 0) bơm vào PolyMAC
     output mac_start, mac_in_r, mac_in_s, mac_data_in, // Các tín hiệu ra lệnh nạp khóa/dữ liệu
     output [4:0] mac_msg_bytes, // Số byte hợp lệ gửi xuống PolyMAC (luôn ép cứng là 16)
     input mac_finish,        // Cờ báo hiệu từ PolyMAC: Đã băm xong 1 block
@@ -78,13 +78,19 @@ module AEAD_controller(
     // - Nếu đang ở State 1 hoặc 3 (Padding): Bơm số 0 (32'd0).
     // - Nếu đang ở State 4 (Block Length): Lần lượt bơm chiều dài AAD và CTX.
     // - Nếu không phải các trường hợp trên: Bơm dữ liệu thật đã được làm sạch (masked_I).
-    assign mac_I = (state == 3'd1 || state == 3'd3) ? 32'd0 : 
-                   (state == 3'd4) ? (                        
-                       (word_cnt == 2'd0) ? aad_len :     // Word 1: AAD Length (32-bit thấp)
-                       (word_cnt == 2'd1) ? 32'd0 :       // Word 2: AAD Length (32-bit cao = 0)
-                       (word_cnt == 2'd2) ? ctx_len :     // Word 3: CTX Length (32-bit thấp)
-                                            32'd0         // Word 4: CTX Length (32-bit cao = 0)
-                   ) : masked_I;
+    always @(*) begin
+        if (state == 3'd1 || state == 3'd3) mac_I = 32'd0;
+        else if (state == 3'd4) begin
+            case (word_cnt)
+                2'd0: mac_I = aad_len;    // Word 1: AAD Length (32-bit thấp)
+                2'd1: mac_I = 32'd0;      // Word 2: AAD Length (32-bit cao = 0)
+                2'd2: mac_I = ctx_len;    // Word 3: CTX Length (32-bit thấp)
+                default:
+                    mac_I = 32'd0;        // Word 4: CTX Length (32-bit cao = 0)
+            endcase
+        end
+        else mac_I = masked_I;
+    end
 
     // =========================================================================
     // 7. MÁY TRẠNG THÁI FSM (FINITE STATE MACHINE)
