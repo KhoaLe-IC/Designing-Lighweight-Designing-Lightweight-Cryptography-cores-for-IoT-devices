@@ -7,7 +7,6 @@ module tb_BF();
     reg [3:0] read_addr;
     reg ready;
     wire [31:0] O;
-    wire done;
     wire finish;
 
     // 2. Khởi tạo BlockFunction (KHÔNG SỬA CODE BÊN TRONG)
@@ -18,7 +17,6 @@ module tb_BF();
         .read_addr(read_addr),
         .ready(ready),
         .O(O),
-        .done(done),
         .finish(finish)
     );
 
@@ -148,14 +146,85 @@ module tb_BF();
 
         run_test_vector(3);
 
+        // ----------------------------------------------------
+        // CHẠY TEST VECTOR #4
+        // RFC 8439 - Key có byte 1 là 0xff, counter = 2
+        // ----------------------------------------------------
+        // SỬA LỖI Ở ĐÂY: current_key[0] = 0x0000ff00
+        current_key[0]=32'h0000ff00; current_key[1]=32'h00000000;
+        current_key[2]=32'h00000000; current_key[3]=32'h00000000;
+        current_key[4]=32'h00000000; current_key[5]=32'h00000000;
+        current_key[6]=32'h00000000; current_key[7]=32'h00000000;
+
+        current_ctr = 32'h00000002; 
+
+        current_nonce[0]=32'h00000000;
+        current_nonce[1]=32'h00000000;
+        current_nonce[2]=32'h00000000;
+
+        // Trả lại nguyên bản các giá trị Expected đúng của bạn
+        current_expected[0]  = 32'hfb4dd572;
+        current_expected[1]  = 32'h4bc42ef1;
+        current_expected[2]  = 32'hdf922636;
+        current_expected[3]  = 32'h327f1394;
+        current_expected[4]  = 32'ha78dea8f;
+        current_expected[5]  = 32'h5e269039;
+        current_expected[6]  = 32'ha1bebbc1;
+        current_expected[7]  = 32'hcaf09aae;
+        current_expected[8]  = 32'ha25ab213;
+        current_expected[9]  = 32'h48a6b46c;
+        current_expected[10] = 32'h1b9d9bcb;
+        current_expected[11] = 32'h092c5be6;
+        current_expected[12] = 32'h546ca624;
+        current_expected[13] = 32'h1bec45d5;
+        current_expected[14] = 32'h87f47473;
+        current_expected[15] = 32'h96f0992e;
+
+        run_test_vector(4);
+
+        // ----------------------------------------------------
+        // CHẠY TEST VECTOR #5
+        // RFC 8439 - Nonce có byte 11 là 0x02
+        // ----------------------------------------------------
+        current_key[0]=32'h00000000; current_key[1]=32'h00000000;
+        current_key[2]=32'h00000000; current_key[3]=32'h00000000;
+        current_key[4]=32'h00000000; current_key[5]=32'h00000000;
+        current_key[6]=32'h00000000; current_key[7]=32'h00000000;
+
+        current_ctr = 32'h00000000;
+
+        current_nonce[0]=32'h00000000;
+        current_nonce[1]=32'h00000000;
+        // SỬA LỖI Ở ĐÂY: current_nonce[2] = 0x02000000
+        current_nonce[2]=32'h02000000;
+
+        // Trả lại nguyên bản các giá trị Expected đúng của bạn
+        current_expected[0]  = 32'h374dc6c2;
+        current_expected[1]  = 32'h3736d58c;
+        current_expected[2]  = 32'hb904e24a;
+        current_expected[3]  = 32'hcd3f93ef;
+        current_expected[4]  = 32'h88228b1a;
+        current_expected[5]  = 32'h96a4dfb3;
+        current_expected[6]  = 32'h5b76ab72;
+        current_expected[7]  = 32'hc727ee54;
+        current_expected[8]  = 32'h0e0e978a;
+        current_expected[9]  = 32'hf3145c95;
+        current_expected[10] = 32'h1b748ea8;
+        current_expected[11] = 32'hf786c297;
+        current_expected[12] = 32'h99c28f5f;
+        current_expected[13] = 32'h628314e8;
+        current_expected[14] = 32'h398a19fa;
+        current_expected[15] = 32'h6ded1b53;
+
+        run_test_vector(5);
         // =====================================================================
         // TỔNG KẾT
         // =====================================================================
         $display("==================================================");
         if (total_errors == 0) begin
-            $display("[WIN] XIN CHUC MUNG! BlockFunction pass TOAN BO 3 Test Vectors!");
+            $display("BlockFunction pass % Test Vectors!");
         end else begin
-            $display("[FAIL] Tong cong co %0d loi xuyen suot qua trinh test.", total_errors);
+            $display("[FAIL] %0d errors existed during test.", total_errors);
         end
         $display("==================================================");
 
